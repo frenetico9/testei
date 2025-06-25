@@ -1,0 +1,5 @@
+{
+  "name": "Navalha Digital - Barbershop Management",
+  "description": "A comprehensive SaaS platform for barbershops to manage bookings, services, clients, and for clients to schedule appointments. Features include admin dashboard, public barbershop pages, and user authentication.",
+  "requestFramePermissions": []
+}

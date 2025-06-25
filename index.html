@@ -1,0 +1,86 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-OPERATION_FAILED" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Navalha Digital</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&family=Roboto+Slab:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+      body {
+        font-family: 'Montserrat', sans-serif;
+        background-color: #0D1F2D; /* Azul Marinho */
+        color: #FFFFFF; /* Branco */
+      }
+      .font-roboto-slab {
+        font-family: 'Roboto Slab', serif;
+      }
+      /* Custom scrollbar for webkit browsers */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #0D1F2D; /* Azul Marinho */
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #8B0000; /* Vermelho Bordô */
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #a52a2a; /* Darker Vermelho Bordô */
+      }
+      /* Basic texture idea - can be replaced with an actual image URL */
+      .bg-leather-texture {
+        /* Example: background-image: url('https://www.transparenttextures.com/patterns/dark-leather.png'); */
+        /* For now, a dark gradient to simulate depth */
+        background-image: linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.1));
+      }
+    </style>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'azul-marinho': '#0D1F2D',
+              'branco-nav': '#FFFFFF',
+              'vermelho-bordo': '#8B0000',
+              'vermelho-bordo-light': '#a52a2a',
+            },
+            fontFamily: {
+              'montserrat': ['Montserrat', 'sans-serif'],
+              'roboto-slab': ['Roboto Slab', 'serif'],
+            }
+          }
+        }
+      }
+    </script>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.1.0/",
+    "react": "https://esm.sh/react@^19.1.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.1.0/",
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.6.2",
+    "react-icons/": "https://esm.sh/react-icons@^5.5.0/",
+    "lucide-react": "https://esm.sh/lucide-react@^0.523.0",
+    "recharts": "https://esm.sh/recharts@^3.0.0",
+    "moment/": "https://esm.sh/moment@^2.30.1/",
+    "moment": "https://esm.sh/moment@^2.30.1",
+    "react-big-calendar/": "https://esm.sh/react-big-calendar@^1.19.4/",
+    "react-big-calendar": "https://esm.sh/react-big-calendar@^1.19.4"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
+    
