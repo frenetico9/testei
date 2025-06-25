@@ -1,7 +1,7 @@
 
-import React, { useEffect, useState, useCallback, useMemo } from 'react'; // Added useMemo
+import React, { useEffect, useState, useCallback, useMemo } from 'react'; 
 import { supabase } from '../../services/supabaseService';
-import { Review as ReviewType } from '../../types'; // Renamed to avoid conflict
+import { Review as ReviewType } from '../../types'; 
 import { useAuth } from '../../hooks/useAuth';
 import Table, { ColumnDefinition } from '../../components/ui/Table';
 import Button from '../../components/ui/Button';
@@ -26,6 +26,7 @@ const ManageReviewsPage: React.FC = () => {
         return;
     }
     setLoading(true);
+    setError(null);
     try {
       const { data, error: fetchError } = await supabase
         .from<ReviewType>('reviews')
@@ -39,8 +40,7 @@ const ManageReviewsPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser?.barbershopId]);
+  }, [currentUser]);
 
   useEffect(() => {
     fetchReviews();
@@ -58,11 +58,12 @@ const ManageReviewsPage: React.FC = () => {
 
   const handleApproveReview = async (reviewId: string, approve: boolean) => {
     setLoading(true);
+    setError(null);
     try {
       const { error: updateError } = await supabase
         .from<ReviewType>('reviews')
-        .eq('id', reviewId)
-        .update({ isApproved: approve });
+        .update({ isApproved: approve })
+        .eq('id', reviewId);
 
       if (updateError) throw updateError;
       await fetchReviews();
@@ -70,7 +71,7 @@ const ManageReviewsPage: React.FC = () => {
       setError(err.message || `Erro ao ${approve ? 'aprovar' : 'reprovar'} avaliação.`);
     } finally {
       setLoading(false);
-      closeReviewModal(); // Close modal after action
+      closeReviewModal(); 
     }
   };
   
@@ -85,7 +86,7 @@ const ManageReviewsPage: React.FC = () => {
     { key: 'clientName', header: 'Cliente' },
     { key: 'serviceName', header: 'Serviço' },
     { key: 'barberName', header: 'Barbeiro' },
-    { key: 'rating', header: 'Nota', render: (r) => <StarRating rating={r.rating} readOnly size={16} /> },
+    { key: 'rating', header: 'Nota', render: (r) => <StarRating rating={r.rating} readOnly size={16} color="text-yellow-400" /> },
     { 
       key: 'comment', 
       header: 'Comentário', 
@@ -111,7 +112,7 @@ const ManageReviewsPage: React.FC = () => {
               <CheckCircle size={14} />
             </Button>
           )}
-           {r.isApproved && ( // Option to disapprove/hide
+           {r.isApproved && ( 
             <Button variant="danger" size="small" onClick={() => handleApproveReview(r.id, false)} title="Reprovar/Ocultar">
               <XCircle size={14} />
             </Button>
@@ -128,18 +129,18 @@ const ManageReviewsPage: React.FC = () => {
       {error && <div className="bg-red-900 bg-opacity-50 text-red-300 p-3 rounded-md flex items-center"><AlertTriangle size={18} className="mr-2"/>{error}</div>}
 
       <Card>
-        <div className="p-4 mb-4 bg-gray-800 bg-opacity-30 rounded-md border border-gray-700">
+        <div className="p-4 mb-4 bg-cinza-fundo-elemento bg-opacity-30 rounded-md border border-cinza-borda">
             <h3 className="text-lg font-semibold text-branco-nav">Média Geral das Avaliações Aprovadas</h3>
             <div className="flex items-center mt-1">
-                <StarRating rating={averageRating} readOnly size={22} />
-                <span className="ml-2 text-xl font-bold text-vermelho-bordo">{averageRating.toFixed(1)}</span>
+                <StarRating rating={averageRating} readOnly size={22} color="text-yellow-400" />
+                <span className="ml-2 text-xl font-bold text-azul-primario">{averageRating.toFixed(1)}</span>
                 <span className="ml-1 text-sm text-gray-400">({reviews.filter(r => r.isApproved).length} avaliações)</span>
             </div>
         </div>
         <Table<ReviewType>
           columns={columns}
           data={reviews}
-          isLoading={loading}
+          isLoading={loading && reviews.length === 0}
           emptyStateMessage="Nenhuma avaliação encontrada."
         />
       </Card>
@@ -151,7 +152,7 @@ const ManageReviewsPage: React.FC = () => {
             <p><strong className="text-gray-400">Serviço:</strong> <span className="text-branco-nav">{selectedReview.serviceName}</span></p>
             <p><strong className="text-gray-400">Barbeiro:</strong> <span className="text-branco-nav">{selectedReview.barberName}</span></p>
             <div className="flex items-center">
-                <strong className="text-gray-400 mr-2">Nota:</strong> <StarRating rating={selectedReview.rating} readOnly />
+                <strong className="text-gray-400 mr-2">Nota:</strong> <StarRating rating={selectedReview.rating} readOnly color="text-yellow-400" />
             </div>
             <p><strong className="text-gray-400">Comentário:</strong></p>
             <p className="p-2 bg-gray-700 rounded text-gray-200 text-sm italic">"{selectedReview.comment}"</p>

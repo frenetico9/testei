@@ -29,7 +29,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error("Error fetching user profile:", error);
       setCurrentUser(null); // Clear profile on error
     } finally {
-      setLoadingAuth(false);
+      // setLoadingAuth(false); // Managed by onAuthStateChange or checkSession
     }
   }, []);
   
@@ -50,14 +50,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoadingAuth(false);
     };
 
-    checkSession();
+    // checkSession(); // onAuthStateChange will cover initial state as well
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setLoadingAuth(true);
       setSupabaseUser(session?.user ?? null);
       if (session?.user) {
+        // console.log("Auth state change: SIGNED_IN", session.user.id);
         await fetchAndSetUserProfile(session.user.id);
       } else {
+        // console.log("Auth state change: SIGNED_OUT");
         setCurrentUser(null);
       }
       setLoadingAuth(false);
@@ -79,11 +81,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw error;
     }
     if (data.user) {
-      setSupabaseUser(data.user);
+      // onAuthStateChange should handle setting user and profile
+      // setSupabaseUser(data.user); 
+      // const profile = await getUserProfile(data.user.id);
+      // setCurrentUser(profile);
+      // setLoadingAuth(false);
+      // return profile;
+      // Let onAuthStateChange handle the update. It might take a moment.
+      // For immediate feedback, we can optimistically fetch here too.
       const profile = await getUserProfile(data.user.id);
       setCurrentUser(profile);
+      setSupabaseUser(data.user)
       setLoadingAuth(false);
-      return profile;
+      return profile
     }
     setLoadingAuth(false);
     return null;
@@ -91,7 +101,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const register = async (name: string, email: string, phone: string, password: string, role: UserRole = UserRole.CLIENT): Promise<User | null> => {
     setLoadingAuth(true);
-    // For ADMIN role, also create a barbershop (mocked in supabaseService)
     const options = {
       data: { 
         name, 
@@ -107,12 +116,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw error;
     }
     if (data.user) {
-      // Supabase mock handles profile creation. Fetch it.
-      setSupabaseUser(data.user);
+      // onAuthStateChange should handle setting user and profile
+      // const profile = await getUserProfile(data.user.id);
+      // setCurrentUser(profile);
+      // setSupabaseUser(data.user);
+      // setLoadingAuth(false);
+      // return profile;
+      // Let onAuthStateChange handle the update.
+      // For immediate feedback after registration:
       const profile = await getUserProfile(data.user.id);
       setCurrentUser(profile);
+      setSupabaseUser(data.user)
       setLoadingAuth(false);
-      return profile;
+      return profile
     }
     setLoadingAuth(false);
     return null;
@@ -124,18 +140,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (error) {
       console.error('Logout error:', error.message);
     }
-    setCurrentUser(null);
-    setSupabaseUser(null);
-    setLoadingAuth(false);
+    // onAuthStateChange will set currentUser and supabaseUser to null
+    // setCurrentUser(null);
+    // setSupabaseUser(null);
+    // setLoadingAuth(false);
   };
 
   const updateUserProfile = async (updates: Partial<User>): Promise<User | null> => {
     if (!currentUser) return null;
     setLoadingAuth(true);
     try {
+      // API call to update the profile in the backend (e.g., 'users' table)
       const updatedUser = await apiUpdateUserProfile(currentUser.id, updates);
       if (updatedUser) {
-        setCurrentUser(updatedUser);
+        setCurrentUser(updatedUser); // Update local state immediately
+
+        // If email was part of 'updates' and needs Supabase auth update
+        if (updates.email && supabaseUser && updates.email !== supabaseUser.email) {
+            const {data: updateAuthUserData, error: authUserUpdateError } = await supabase.auth.updateUser({ email: updates.email });
+            if (authUserUpdateError) {
+                console.warn("Failed to update email in Supabase Auth:", authUserUpdateError.message);
+                // Potentially revert local email update or notify user
+            } else {
+                 console.log("Supabase Auth email update initiated (if different). User:", updateAuthUserData?.user);
+            }
+        }
       }
       return updatedUser;
     } catch (error) {
@@ -166,4 +195,3 @@ export const useAuth = () => {
   }
   return context;
 };
-    

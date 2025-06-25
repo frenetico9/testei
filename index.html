@@ -1,8 +1,7 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
   <head>
-    <meta charset="UTF-OPERATION_FAILED" />
+    <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Navalha Digital</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -12,7 +11,7 @@
     <style>
       body {
         font-family: 'Montserrat', sans-serif;
-        background-color: #0D1F2D; /* Azul Marinho */
+        background-color: #0D1F2D; /* Azul Marinho (Base Dark Blue) */
         color: #FFFFFF; /* Branco */
       }
       .font-roboto-slab {
@@ -27,18 +26,13 @@
         background: #0D1F2D; /* Azul Marinho */
       }
       ::-webkit-scrollbar-thumb {
-        background: #8B0000; /* Vermelho Bordô */
+        background: #3B82F6; /* New Primary Blue */
         border-radius: 4px;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: #a52a2a; /* Darker Vermelho Bordô */
+        background: #2563EB; /* Darker New Primary Blue */
       }
-      /* Basic texture idea - can be replaced with an actual image URL */
-      .bg-leather-texture {
-        /* Example: background-image: url('https://www.transparenttextures.com/patterns/dark-leather.png'); */
-        /* For now, a dark gradient to simulate depth */
-        background-image: linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.1));
-      }
+      /* Removed .bg-leather-texture style */
     </style>
     <script>
       tailwind.config = {
@@ -47,8 +41,12 @@
             colors: {
               'azul-marinho': '#0D1F2D',
               'branco-nav': '#FFFFFF',
-              'vermelho-bordo': '#8B0000',
-              'vermelho-bordo-light': '#a52a2a',
+              'azul-primario': '#3B82F6', // New Primary Blue (replacing vermelho-bordo)
+              'azul-primario-hover': '#2563EB', // Darker shade for hover (replacing vermelho-bordo-light)
+              'azul-claro': '#BFDBFE', // Light blue for accents if needed
+              'cinza-texto-claro': '#E0E0E0', // For secondary text on dark backgrounds
+              'cinza-borda': '#374151', // For borders (Tailwind gray-700)
+              'cinza-fundo-elemento': '#1F2937', // For card-like backgrounds (Tailwind gray-800)
             },
             fontFamily: {
               'montserrat': ['Montserrat', 'sans-serif'],
@@ -83,4 +81,3 @@
     <script type="module" src="/index.tsx"></script>
   </body>
 </html>
-    

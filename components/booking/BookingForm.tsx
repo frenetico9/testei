@@ -3,7 +3,7 @@ import React from 'react';
 import Input from '../ui/Input';
 import { User } from '../../types';
 import { User as UserIcon } from 'lucide-react';
-import { ROUTES } from '../../constants'; // Added import for ROUTES
+import { ROUTES } from '../../constants';
 
 interface BookingFormProps {
   clientDetails: {
@@ -12,7 +12,7 @@ interface BookingFormProps {
     phone: string;
   };
   onDetailsChange: (field: keyof BookingFormProps['clientDetails'], value: string) => void;
-  currentUser: User | null; // If user is logged in, prefill
+  currentUser: User | null; 
 }
 
 const BookingForm: React.FC<BookingFormProps> = ({ clientDetails, onDetailsChange, currentUser }) => {
@@ -24,12 +24,12 @@ const BookingForm: React.FC<BookingFormProps> = ({ clientDetails, onDetailsChang
       onDetailsChange('phone', currentUser.phone || '');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser]); // Only on currentUser change
+  }, [currentUser]); 
 
   return (
     <div className="space-y-4">
       <h3 className="text-xl font-roboto-slab font-semibold text-branco-nav mb-3 flex items-center">
-        <UserIcon size={22} className="mr-2 text-vermelho-bordo" /> 5. Seus Dados
+        <UserIcon size={22} className="mr-2 text-azul-primario" /> 5. Seus Dados
       </h3>
       {currentUser && (
         <p className="text-sm text-gray-300 mb-4">
@@ -67,7 +67,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ clientDetails, onDetailsChang
       />
       {!currentUser && (
         <p className="text-xs text-gray-400">
-            Já tem conta? <a href={`#${ROUTES.LOGIN}?redirect=${encodeURIComponent(window.location.hash)}`} className="text-vermelho-bordo hover:underline">Faça login</a> para agilizar.
+            Já tem conta? <a href={`#${ROUTES.LOGIN}?redirect=${encodeURIComponent(window.location.hash)}`} className="text-azul-primario hover:underline">Faça login</a> para agilizar.
         </p>
       )}
     </div>

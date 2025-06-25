@@ -17,7 +17,10 @@ interface NavItemProps {
 
 const NavItem: React.FC<NavItemProps> = ({ to, icon, label, onClick }) => {
   const location = useLocation();
-  const isActive = location.pathname === to || (to !== ROUTES.ADMIN_DASHBOARD && location.pathname.startsWith(to));
+  const isActive = location.pathname === to || (to !== ROUTES.ADMIN_DASHBOARD && location.pathname.startsWith(to) && to !== ROUTES.ADMIN_PROFILE);
+   // Special case for profile as it might be a common parent route
+  const isProfileActive = to === ROUTES.ADMIN_PROFILE && location.pathname.startsWith(ROUTES.ADMIN_PROFILE);
+
 
   return (
     <li>
@@ -25,9 +28,9 @@ const NavItem: React.FC<NavItemProps> = ({ to, icon, label, onClick }) => {
         to={to}
         onClick={onClick}
         className={`flex items-center p-3 my-1 rounded-md transition-colors duration-200
-                    ${isActive 
-                      ? 'bg-vermelho-bordo text-branco-nav shadow-md' 
-                      : 'text-gray-300 hover:bg-gray-700 hover:text-branco-nav'
+                    ${(isActive || isProfileActive)
+                      ? 'bg-azul-primario text-branco-nav shadow-md' 
+                      : 'text-gray-300 hover:bg-cinza-fundo-elemento hover:text-branco-nav'
                     }`}
       >
         <span className="mr-3">{icon}</span>
@@ -51,9 +54,9 @@ const AdminLayout: React.FC = () => {
   const navItems = [
     { to: ROUTES.ADMIN_DASHBOARD, icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
     { to: ROUTES.ADMIN_CALENDAR, icon: <CalendarDays size={20} />, label: 'Agenda Visual' },
-    { to: ROUTES.ADMIN_BOOKINGS, icon: <Wrench size={20} />, label: 'Agendamentos' }, // Wrench for 'manage'
+    { to: ROUTES.ADMIN_BOOKINGS, icon: <Wrench size={20} />, label: 'Agendamentos' },
     { to: ROUTES.ADMIN_SERVICES, icon: <Scissors size={20} />, label: 'Serviços' },
-    { to: ROUTES.ADMIN_BARBERS, icon: <Building size={20} />, label: 'Funcionários' }, // Changed icon to represent staff
+    { to: ROUTES.ADMIN_BARBERS, icon: <Building size={20} />, label: 'Funcionários' },
     { to: ROUTES.ADMIN_CLIENTS, icon: <Users size={20} />, label: 'Clientes' },
     { to: ROUTES.ADMIN_REVIEWS, icon: <Star size={20} />, label: 'Avaliações' },
     { to: ROUTES.ADMIN_SUBSCRIPTION, icon: <CreditCard size={20} />, label: 'Assinatura' },
@@ -62,7 +65,7 @@ const AdminLayout: React.FC = () => {
 
   const SidebarContent = () => (
     <>
-      <div className="p-4 border-b border-gray-700">
+      <div className="p-4 border-b border-cinza-borda">
         <Logo size="medium" showText={true} />
       </div>
       <nav className="flex-grow p-4 space-y-1">
@@ -72,10 +75,10 @@ const AdminLayout: React.FC = () => {
           ))}
         </ul>
       </nav>
-      <div className="p-4 border-t border-gray-700">
+      <div className="p-4 border-t border-cinza-borda">
         <button
           onClick={handleLogout}
-          className="w-full flex items-center justify-center p-3 rounded-md text-gray-300 hover:bg-vermelho-bordo hover:text-branco-nav transition-colors duration-200"
+          className="w-full flex items-center justify-center p-3 rounded-md text-gray-300 hover:bg-azul-primario hover:text-branco-nav transition-colors duration-200"
         >
           <LogOut size={20} className="mr-3" />
           <span className="font-medium">Sair</span>
@@ -87,7 +90,7 @@ const AdminLayout: React.FC = () => {
   return (
     <div className="flex h-screen bg-azul-marinho text-branco-nav">
       {/* Static Sidebar for Desktop */}
-      <aside className="hidden md:flex md:flex-col w-64 bg-gray-800 bg-opacity-50 border-r border-gray-700 shadow-lg">
+      <aside className="hidden md:flex md:flex-col w-64 bg-cinza-fundo-elemento bg-opacity-50 border-r border-cinza-borda shadow-lg">
         <SidebarContent />
       </aside>
 
@@ -95,7 +98,7 @@ const AdminLayout: React.FC = () => {
       {sidebarOpen && (
         <div className="fixed inset-0 z-40 flex md:hidden">
           <div className="fixed inset-0 bg-black opacity-50" onClick={() => setSidebarOpen(false)}></div>
-          <aside className="relative flex flex-col w-64 max-w-[80vw] bg-azul-marinho border-r border-gray-700 shadow-xl z-50">
+          <aside className="relative flex flex-col w-64 max-w-[80vw] bg-azul-marinho border-r border-cinza-borda shadow-xl z-50">
             <button 
               onClick={() => setSidebarOpen(false)} 
               className="absolute top-4 right-4 text-gray-400 hover:text-branco-nav p-1"
@@ -110,7 +113,7 @@ const AdminLayout: React.FC = () => {
 
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Bar for Mobile Toggle and User Info */}
-        <header className="bg-gray-800 bg-opacity-70 shadow-md md:hidden border-b border-gray-700 sticky top-0 z-30">
+        <header className="bg-cinza-fundo-elemento bg-opacity-70 shadow-md md:hidden border-b border-cinza-borda sticky top-0 z-30">
           <div className="px-4 h-16 flex items-center justify-between">
             <button 
               onClick={() => setSidebarOpen(!sidebarOpen)} 
@@ -126,7 +129,7 @@ const AdminLayout: React.FC = () => {
           </div>
         </header>
         
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-leather-texture p-4 md:p-6 lg:p-8">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-azul-marinho p-4 md:p-6 lg:p-8"> {/* Removed bg-leather-texture */}
            <div className="max-w-7xl mx-auto">
             <Outlet />
            </div>
@@ -137,4 +140,3 @@ const AdminLayout: React.FC = () => {
 };
 
 export default AdminLayout;
-    

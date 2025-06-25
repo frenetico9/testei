@@ -44,7 +44,7 @@ const RegisterPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-azul-marinho p-4 bg-leather-texture">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-azul-marinho p-4">
       <div className="mb-8">
         <Logo size="large" />
       </div>
@@ -108,15 +108,15 @@ const RegisterPage: React.FC = () => {
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-300">
             Já tem uma conta?{' '}
-            <Link to={ROUTES.LOGIN} className="font-semibold text-vermelho-bordo hover:text-vermelho-bordo-light transition-colors">
+            <Link to={ROUTES.LOGIN} className="font-semibold text-azul-primario hover:text-azul-primario-hover transition-colors">
               Faça login
             </Link>
           </p>
         </div>
          <p className="mt-4 text-xs text-gray-400 text-center">
             Ao se registrar, você concorda com nossos{' '}
-            <Link to="/terms" className="underline hover:text-vermelho-bordo">Termos de Serviço</Link> e{' '}
-            <Link to="/privacy" className="underline hover:text-vermelho-bordo">Política de Privacidade</Link>.
+            <Link to="/terms" className="underline hover:text-azul-primario">Termos de Serviço</Link> e{' '}
+            <Link to="/privacy" className="underline hover:text-azul-primario">Política de Privacidade</Link>.
           </p>
       </Card>
     </div>
@@ -124,4 +124,3 @@ const RegisterPage: React.FC = () => {
 };
 
 export default RegisterPage;
-    

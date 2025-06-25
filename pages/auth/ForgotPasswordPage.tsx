@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
 import Logo from '../../components/ui/Logo';
-import { supabase } from '../../services/supabaseService'; // Direct Supabase for this, or via useAuth if preferred
+import { supabase } from '../../services/supabaseService'; 
 import { ROUTES } from '../../constants';
 import Card from '../../components/ui/Card';
 
@@ -20,14 +20,11 @@ const ForgotPasswordPage: React.FC = () => {
     setMessage(null);
     setLoading(true);
     try {
-      // In a real app, this would be:
-      // const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      //   redirectTo: window.location.origin + '/reset-password', // URL to your password reset page
-      // });
-      // Mocking the behavior:
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      console.log(`Mock password reset email sent to ${email}`);
-      // if (error) throw error;
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}${window.location.pathname}#${ROUTES.LOGIN}`, // Example redirect, adjust as needed
+      });
+      
+      if (resetError) throw resetError;
       setMessage("Se o e-mail estiver cadastrado, você receberá um link para redefinir sua senha.");
     } catch (err: any) {
       setError(err.message || "Ocorreu um erro. Tente novamente.");
@@ -37,7 +34,7 @@ const ForgotPasswordPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-azul-marinho p-4 bg-leather-texture">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-azul-marinho p-4">
       <div className="mb-8">
         <Logo size="large" />
       </div>
@@ -69,7 +66,7 @@ const ForgotPasswordPage: React.FC = () => {
         )}
 
         <div className="mt-6 text-center">
-          <Link to={ROUTES.LOGIN} className="text-sm text-gray-400 hover:text-vermelho-bordo transition-colors">
+          <Link to={ROUTES.LOGIN} className="text-sm text-gray-400 hover:text-azul-primario transition-colors">
             Voltar para o Login
           </Link>
         </div>
@@ -79,4 +76,3 @@ const ForgotPasswordPage: React.FC = () => {
 };
 
 export default ForgotPasswordPage;
-    

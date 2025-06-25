@@ -6,14 +6,14 @@ import Button from '../ui/Button';
 import { useAuth } from '../../hooks/useAuth';
 import { Menu, X, LogIn, UserPlus, UserCircle, LogOut } from 'lucide-react';
 import { ROUTES } from '../../constants';
-import { UserRole } from '../../types'; // Added import for UserRole
+import { UserRole } from '../../types';
 
 const PublicLayout: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { currentUser, logout } = useAuth();
 
-  const commonLinkClasses = "text-branco-nav hover:text-vermelho-bordo transition-colors duration-200 px-3 py-2 rounded-md text-sm font-medium";
-  const mobileLinkClasses = "block px-3 py-2 rounded-md text-base font-medium text-branco-nav hover:bg-gray-700 hover:text-vermelho-bordo";
+  const commonLinkClasses = "text-branco-nav hover:text-azul-primario transition-colors duration-200 px-3 py-2 rounded-md text-sm font-medium";
+  const mobileLinkClasses = "block px-3 py-2 rounded-md text-base font-medium text-branco-nav hover:bg-cinza-fundo-elemento hover:text-azul-primario";
 
   const handleLogout = async () => {
     await logout();
@@ -22,7 +22,7 @@ const PublicLayout: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-azul-marinho">
-      <nav className="bg-azul-marinho bg-opacity-80 shadow-lg sticky top-0 z-40 backdrop-filter backdrop-blur-md border-b border-gray-700">
+      <nav className="bg-azul-marinho bg-opacity-80 shadow-lg sticky top-0 z-40 backdrop-filter backdrop-blur-md border-b border-cinza-borda">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
             <div className="flex items-center">
@@ -58,7 +58,7 @@ const PublicLayout: React.FC = () => {
             <div className="md:hidden flex items-center">
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="text-branco-nav hover:text-vermelho-bordo focus:outline-none p-2"
+                className="text-branco-nav hover:text-azul-primario focus:outline-none p-2"
                 aria-label="Toggle menu"
               >
                 {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
@@ -68,7 +68,7 @@ const PublicLayout: React.FC = () => {
         </div>
         {/* Mobile menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden bg-azul-marinho border-t border-gray-700">
+          <div className="md:hidden bg-azul-marinho border-t border-cinza-borda">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
               <Link to={ROUTES.HOME} className={mobileLinkClasses} onClick={()=>setIsMobileMenuOpen(false)}>Início</Link>
               {/* <Link to="/barbershops" className={mobileLinkClasses} onClick={()=>setIsMobileMenuOpen(false)}>Barbearias</Link> */}
@@ -96,14 +96,14 @@ const PublicLayout: React.FC = () => {
         <Outlet />
       </main>
 
-      <footer className="bg-gray-900 bg-opacity-70 border-t border-gray-700 text-center py-8">
+      <footer className="bg-cinza-fundo-elemento bg-opacity-70 border-t border-cinza-borda text-center py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <Logo size="small" className="justify-center mb-2" />
           <p className="text-sm text-gray-400">
             &copy; {new Date().getFullYear()} Navalha Digital. Todos os direitos reservados.
           </p>
           <p className="text-xs text-gray-500 mt-1">
-            <Link to="/terms" className="hover:text-vermelho-bordo">Termos de Serviço</Link> | <Link to="/privacy" className="hover:text-vermelho-bordo">Política de Privacidade</Link>
+            <Link to="/terms" className="hover:text-azul-primario">Termos de Serviço</Link> | <Link to="/privacy" className="hover:text-azul-primario">Política de Privacidade</Link>
           </p>
         </div>
       </footer>

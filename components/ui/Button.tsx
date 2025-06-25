@@ -2,7 +2,7 @@
 import React from 'react';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'danger' | 'outline';
+  variant?: 'primary' | 'secondary' | 'danger' | 'outline' | 'ghost'; // Added ghost
   size?: 'small' | 'medium' | 'large';
   isLoading?: boolean;
   leftIcon?: React.ReactNode;
@@ -19,13 +19,14 @@ const Button: React.FC<ButtonProps> = ({
   className = '',
   ...props
 }) => {
-  const baseStyles = 'font-semibold rounded-md focus:outline-none focus:ring-2 focus:ring-opacity-50 transition-all duration-150 ease-in-out flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed';
+  const baseStyles = 'font-semibold rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-azul-marinho focus:ring-opacity-70 transition-all duration-150 ease-in-out flex items-center justify-center space-x-2 disabled:opacity-60 disabled:cursor-not-allowed';
 
   const variantStyles = {
-    primary: 'bg-vermelho-bordo text-branco-nav hover:bg-vermelho-bordo-light focus:ring-vermelho-bordo',
-    secondary: 'bg-gray-200 text-azul-marinho hover:bg-gray-300 focus:ring-gray-400',
+    primary: 'bg-azul-primario text-branco-nav hover:bg-azul-primario-hover focus:ring-azul-primario',
+    secondary: 'bg-cinza-fundo-elemento text-branco-nav hover:bg-gray-700 focus:ring-azul-claro', // Adjusted for dark theme
     danger: 'bg-red-600 text-branco-nav hover:bg-red-700 focus:ring-red-500',
-    outline: 'bg-transparent border border-vermelho-bordo text-vermelho-bordo hover:bg-vermelho-bordo hover:text-branco-nav focus:ring-vermelho-bordo',
+    outline: 'bg-transparent border border-azul-primario text-azul-primario hover:bg-azul-primario hover:text-branco-nav focus:ring-azul-primario',
+    ghost: 'bg-transparent text-azul-primario hover:bg-blue-500/10 focus:ring-azul-primario', // For subtle actions
   };
 
   const sizeStyles = {
@@ -46,12 +47,11 @@ const Button: React.FC<ButtonProps> = ({
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
         </svg>
       )}
-      {leftIcon && !isLoading && <span>{leftIcon}</span>}
+      {leftIcon && !isLoading && <span className="flex items-center">{leftIcon}</span>}
       <span>{children}</span>
-      {rightIcon && !isLoading && <span>{rightIcon}</span>}
+      {rightIcon && !isLoading && <span className="flex items-center">{rightIcon}</span>}
     </button>
   );
 };
 
 export default Button;
-    

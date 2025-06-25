@@ -9,7 +9,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 }
 
 const Input: React.FC<InputProps> = ({ label, name, error, type = 'text', containerClassName = '', className = '', helperText, ...props }) => {
-  const baseInputClasses = "w-full px-4 py-2 bg-gray-700 bg-opacity-50 border border-gray-600 rounded-md text-branco-nav placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-vermelho-bordo focus:border-transparent transition-colors";
+  const baseInputClasses = "w-full px-4 py-2 bg-gray-700 bg-opacity-50 border border-cinza-borda rounded-md text-branco-nav placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-azul-primario focus:border-transparent transition-colors";
   const errorInputClasses = "border-red-500 focus:ring-red-500";
 
   return (
@@ -36,7 +36,7 @@ interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement
 }
 
 export const Textarea: React.FC<TextareaProps> = ({ label, name, error, containerClassName = '', className = '', ...props }) => {
-  const baseInputClasses = "w-full px-4 py-2 bg-gray-700 bg-opacity-50 border border-gray-600 rounded-md text-branco-nav placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-vermelho-bordo focus:border-transparent transition-colors";
+  const baseInputClasses = "w-full px-4 py-2 bg-gray-700 bg-opacity-50 border border-cinza-borda rounded-md text-branco-nav placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-azul-primario focus:border-transparent transition-colors";
   const errorInputClasses = "border-red-500 focus:ring-red-500";
 
   return (
@@ -59,11 +59,11 @@ interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   error?: string;
   containerClassName?: string;
   options: { value: string | number; label: string }[];
-  placeholder?: string; // Added placeholder property
+  placeholder?: string;
 }
 
 export const Select: React.FC<SelectProps> = ({ label, name, error, options, containerClassName = '', className = '', ...props }) => {
-  const baseSelectClasses = "w-full px-4 py-2.5 bg-gray-700 bg-opacity-50 border border-gray-600 rounded-md text-branco-nav placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-vermelho-bordo focus:border-transparent transition-colors appearance-none";
+  const baseSelectClasses = "w-full px-4 py-2.5 bg-gray-700 bg-opacity-50 border border-cinza-borda rounded-md text-branco-nav placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-azul-primario focus:border-transparent transition-colors appearance-none";
   const errorSelectClasses = "border-red-500 focus:ring-red-500";
 
   return (

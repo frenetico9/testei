@@ -85,7 +85,7 @@ const App: React.FC = () => {
 
 // Simple Spinner component for loading states
 const Spinner: React.FC = () => (
-  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-vermelho-bordo"></div>
+  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-azul-primario"></div>
 );
 
 

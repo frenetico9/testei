@@ -9,14 +9,13 @@ import Modal from '../../components/ui/Modal';
 import { Select } from '../../components/ui/Input';
 import Card from '../../components/ui/Card';
 import { Edit3, Trash2, Filter, Download, PlusCircle, AlertTriangle } from 'lucide-react';
-import { MOCK_BARBERS_DATA, MOCK_SERVICES_DATA } from '../../constants'; // For filter options
+import { MOCK_BARBERS_DATA, MOCK_SERVICES_DATA } from '../../constants'; 
 import { UserRole } from '../../types';
 
 const ManageBookingsPage: React.FC = () => {
   const { currentUser } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
-  const [allBarbers, setAllBarbers] = useState<Barber[]>(MOCK_BARBERS_DATA); // Load from constants for now
-  // const [allServices, setAllServices] = useState<Service[]>(MOCK_SERVICES_DATA); // Load from constants for now
+  const [allBarbers, setAllBarbers] = useState<Barber[]>([]); 
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,6 +23,8 @@ const ManageBookingsPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [modalMode, setModalMode] = useState<'edit' | 'cancel' | 'create'>('create');
+  const [formStatus, setFormStatus] = useState<BookingStatus>(BookingStatus.PENDING);
+
 
   const [filters, setFilters] = useState<{ status: string; date: string; barberId: string }>({
     status: '',
@@ -31,35 +32,41 @@ const ManageBookingsPage: React.FC = () => {
     barberId: '',
   });
 
-  const fetchBookings = useCallback(async () => {
+  const fetchBookingsAndRelatedData = useCallback(async () => {
     if (!currentUser || !currentUser.barbershopId) {
         setError("Usuário ou barbearia não identificados.");
         setLoading(false);
         return;
     }
     setLoading(true);
+    setError(null);
     try {
-      const { data, error: fetchError } = await supabase
+      // Fetch barbers first
+      const { data: barbersData, error: barbersError } = await supabase
+        .from<Barber>('barbers')
+        .eq('barbershopId', currentUser.barbershopId)
+        .select('*');
+      if (barbersError) throw barbersError;
+      setAllBarbers(barbersData || MOCK_BARBERS_DATA); // Fallback to mock if needed, though real data is preferred
+
+      // Fetch bookings
+      const { data: bookingsData, error: fetchError } = await supabase
         .from<Booking>('bookings')
         .eq('barbershopId', currentUser.barbershopId)
         .select('*');
       if (fetchError) throw fetchError;
       
-      setBookings((data || []).sort((a,b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())); // Sort by most recent first
+      setBookings((bookingsData || []).sort((a,b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())); 
     } catch (err: any) {
-      setError(err.message || "Erro ao buscar agendamentos.");
+      setError(err.message || "Erro ao buscar dados.");
     } finally {
       setLoading(false);
     }
   }, [currentUser]);
 
   useEffect(() => {
-    fetchBookings();
-    if (currentUser?.barbershopId) {
-        // const fetchedBarbers = await getBarbersForBarbershop(currentUser.barbershopId);
-        // setAllBarbers(fetchedBarbers); // Replace MOCK_BARBERS_DATA
-    }
-  }, [fetchBookings, currentUser?.barbershopId]);
+    fetchBookingsAndRelatedData();
+  }, [fetchBookingsAndRelatedData]);
 
   const filteredBookings = useMemo(() => {
     return bookings.filter(booking => {
@@ -77,6 +84,11 @@ const ManageBookingsPage: React.FC = () => {
   const openModal = (mode: 'edit' | 'cancel' | 'create', booking?: Booking) => {
     setModalMode(mode);
     setSelectedBooking(booking || null);
+    if (booking && mode === 'edit') {
+      setFormStatus(booking.status);
+    } else {
+      setFormStatus(BookingStatus.PENDING); // Default for create or reset for cancel
+    }
     setIsModalOpen(true);
   };
 
@@ -85,19 +97,22 @@ const ManageBookingsPage: React.FC = () => {
     setSelectedBooking(null);
   };
 
-  const handleSaveBooking = async (updatedBookingData: Partial<Booking>) => {
+  const handleSaveBooking = async () => { // Removed updatedBookingData from params, will use formStatus
     if (!selectedBooking || !selectedBooking.id) return;
     setLoading(true);
+    setError(null);
     try {
-        const { id, ...payloadSansId } = { ...selectedBooking, ...updatedBookingData }; 
+        // Only status is editable in this simplified modal
+        const payloadToUpdate: Partial<Booking> = { status: formStatus };
+        
         const { data, error: updateError } = await supabase
             .from<Booking>('bookings')
-            .eq('id', selectedBooking.id)
-            .update(payloadSansId as Partial<Booking>);
+            .update(payloadToUpdate)
+            .eq('id', selectedBooking.id); // Corrected: update first, then eq
 
         if (updateError) throw updateError;
         
-        await fetchBookings(); // Refresh list
+        await fetchBookingsAndRelatedData(); 
         closeModal();
     } catch (err: any) {
         setError("Erro ao salvar agendamento: " + err.message);
@@ -106,9 +121,28 @@ const ManageBookingsPage: React.FC = () => {
     }
   };
   
-  const handleCancelBooking = async (bookingToCancel: Booking, reason: string = "Cancelado pelo admin") => {
-    console.log(`Booking ${bookingToCancel.id} cancelled. Reason: ${reason}`);
-    await handleSaveBooking({ status: BookingStatus.CANCELLED_ADMIN });
+  const handleCancelBooking = async (bookingToCancel: Booking) => {
+    console.log(`Booking ${bookingToCancel.id} will be marked as CANCELLED_ADMIN`);
+    setSelectedBooking(bookingToCancel); // Ensure selectedBooking is set
+    setFormStatus(BookingStatus.CANCELLED_ADMIN); // Set status for saving
+    // Directly call save logic as if it was an edit
+    setLoading(true);
+    setError(null);
+    try {
+        const { error: updateError } = await supabase
+            .from<Booking>('bookings')
+            .update({ status: BookingStatus.CANCELLED_ADMIN })
+            .eq('id', bookingToCancel.id);
+
+        if (updateError) throw updateError;
+        
+        await fetchBookingsAndRelatedData(); 
+        closeModal();
+    } catch (err: any) {
+        setError("Erro ao cancelar agendamento: " + err.message);
+    } finally {
+        setLoading(false);
+    }
   };
 
   const exportToCSV = () => {
@@ -145,7 +179,7 @@ const ManageBookingsPage: React.FC = () => {
     { key: 'serviceName', header: 'Serviço', render: (b) => (
         <div>
             <p>{b.serviceName}</p>
-            <p className="text-xs text-vermelho-bordo font-semibold">R$ {b.priceAtBooking.toFixed(2)}</p>
+            <p className="text-xs text-azul-primario font-semibold">R$ {b.priceAtBooking.toFixed(2)}</p>
         </div>
     )},
     { key: 'barberName', header: 'Barbeiro' },
@@ -155,11 +189,11 @@ const ManageBookingsPage: React.FC = () => {
       header: 'Status', 
       render: (b) => {
         let colorClass = 'bg-gray-600 text-gray-200';
-        if (b.status === BookingStatus.CONFIRMED) colorClass = 'bg-green-700 text-green-200';
-        else if (b.status === BookingStatus.PENDING) colorClass = 'bg-yellow-700 text-yellow-200';
-        else if (b.status === BookingStatus.COMPLETED) colorClass = 'bg-blue-700 text-blue-200';
-        else if (b.status.startsWith('CANCELLED')) colorClass = 'bg-red-700 text-red-200';
-        else if (b.status === BookingStatus.NO_SHOW) colorClass = 'bg-purple-700 text-purple-200';
+        if (b.status === BookingStatus.CONFIRMED) colorClass = 'bg-green-600 text-green-100';
+        else if (b.status === BookingStatus.PENDING) colorClass = 'bg-yellow-600 text-yellow-100';
+        else if (b.status === BookingStatus.COMPLETED) colorClass = 'bg-blue-600 text-blue-100';
+        else if (b.status.startsWith('CANCELLED')) colorClass = 'bg-red-700 text-red-100';
+        else if (b.status === BookingStatus.NO_SHOW) colorClass = 'bg-purple-700 text-purple-100';
         return <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${colorClass}`}>{b.status.replace(/_/g, ' ').toUpperCase()}</span>;
       }
     },
@@ -197,12 +231,12 @@ const ManageBookingsPage: React.FC = () => {
       {error && <div className="bg-red-900 bg-opacity-50 text-red-300 p-3 rounded-md flex items-center"><AlertTriangle size={18} className="mr-2"/>{error}</div>}
 
       <Card>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-4 bg-gray-800 bg-opacity-30 rounded-md border border-gray-700">
-            <h3 className="md:col-span-4 text-lg font-semibold text-branco-nav flex items-center"><Filter size={18} className="mr-2 text-vermelho-bordo"/>Filtros</h3>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-4 bg-cinza-fundo-elemento bg-opacity-30 rounded-md border border-cinza-borda">
+            <h3 className="md:col-span-4 text-lg font-semibold text-branco-nav flex items-center"><Filter size={18} className="mr-2 text-azul-primario"/>Filtros</h3>
             <Select name="status" label="Status" value={filters.status} onChange={handleFilterChange} options={[{value: '', label: 'Todos Status'}, ...statusOptions]} />
             <div>
                  <label htmlFor="date" className="block text-sm font-medium text-gray-300 mb-1">Data</label>
-                <input type="date" name="date" id="date" value={filters.date} onChange={handleFilterChange} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-branco-nav focus:ring-vermelho-bordo focus:border-vermelho-bordo"/>
+                <input type="date" name="date" id="date" value={filters.date} onChange={handleFilterChange} className="w-full px-3 py-2 bg-gray-700 border border-cinza-borda rounded-md text-branco-nav focus:ring-azul-primario focus:border-azul-primario"/>
             </div>
             <Select name="barberId" label="Barbeiro" value={filters.barberId} onChange={handleFilterChange} options={barberOptions} />
             <div className="md:col-start-4 flex items-end">
@@ -212,16 +246,15 @@ const ManageBookingsPage: React.FC = () => {
         <Table<Booking>
             columns={columns}
             data={filteredBookings}
-            isLoading={loading}
+            isLoading={loading && bookings.length === 0} // Show loading only if no data yet
             emptyStateMessage="Nenhum agendamento encontrado com os filtros atuais."
-            // onRowClick={(booking) => openModal('edit', booking)} // Can enable row click to edit
         />
       </Card>
 
       {isModalOpen && selectedBooking && (modalMode === 'edit' || modalMode === 'cancel') && (
         <Modal isOpen={isModalOpen} onClose={closeModal} title={modalMode === 'edit' ? "Editar Agendamento" : "Cancelar Agendamento"}>
           {modalMode === 'edit' && (
-            <form onSubmit={(e) => { e.preventDefault(); handleSaveBooking({ status: (e.target as any).status.value as BookingStatus }); }}>
+            <form onSubmit={(e) => { e.preventDefault(); handleSaveBooking(); }}>
               <p className="mb-2 text-gray-300">Cliente: <span className="font-semibold text-branco-nav">{selectedBooking.clientName}</span></p>
               <p className="mb-2 text-gray-300">Serviço: <span className="font-semibold text-branco-nav">{selectedBooking.serviceName}</span></p>
               <p className="mb-4 text-gray-300">Horário: <span className="font-semibold text-branco-nav">{new Date(selectedBooking.startTime).toLocaleString('pt-BR')}</span></p>
@@ -229,7 +262,8 @@ const ManageBookingsPage: React.FC = () => {
               <Select
                 name="status"
                 label="Novo Status"
-                defaultValue={selectedBooking.status}
+                value={formStatus} // Controlled component
+                onChange={(e) => setFormStatus(e.target.value as BookingStatus)}
                 options={statusOptions}
                 containerClassName="mb-6"
               />

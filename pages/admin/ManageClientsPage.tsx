@@ -25,8 +25,9 @@ const ManageClientsPage: React.FC = () => {
       return;
     }
     setLoading(true);
+    setError(null);
     try {
-      // 1. Fetch all bookings for the current barbershop
+      // Fetch all bookings for the current barbershop
       const { data: bookingsData, error: bookingsError } = await supabase
         .from<Booking>('bookings')
         .eq('barbershopId', currentUser.barbershopId)
@@ -34,26 +35,28 @@ const ManageClientsPage: React.FC = () => {
       if (bookingsError) throw bookingsError;
 
       const barbershopBookings = bookingsData || [];
-      setClientBookings(barbershopBookings); // Store all bookings for history lookup
+      setClientBookings(barbershopBookings); 
 
-      // 2. Extract unique client IDs from these bookings
+      // Extract unique client IDs from these bookings
       const clientIds = Array.from(new Set(barbershopBookings.map(b => b.clientId)));
 
       if (clientIds.length > 0) {
-        // 3. Fetch user profiles for these client IDs
+        // Fetch user profiles for these client IDs
+        // Note: In a real scenario, you might filter by role or ensure these are actual clients
         const { data: usersData, error: usersError } = await supabase
           .from<User>('users')
           .in('id', clientIds)
+          //.eq('role', UserRole.CLIENT) // Optionally filter by role if 'users' table contains non-clients
           .select('*');
         if (usersError) throw usersError;
         
         setClients(usersData || []);
       } else {
-        setClients([]);
+        setClients([]); // No bookings means no clients derived from bookings
       }
 
     } catch (err: any) {
-      setError(err.message || "Erro ao buscar clientes.");
+      setError(err.message || "Erro ao buscar clientes e agendamentos.");
     } finally {
       setLoading(false);
     }
@@ -83,7 +86,7 @@ const ManageClientsPage: React.FC = () => {
     { 
         key: 'profilePictureUrl', 
         header: 'Foto', 
-        render: (c) => <img src={c.profilePictureUrl || 'https://picsum.photos/seed/defaultclient/50/50'} alt={c.name} className="w-10 h-10 rounded-full object-cover"/> 
+        render: (c) => <img src={c.profilePictureUrl || `https://ui-avatars.com/api/?name=${c.name.replace(/\s/g, "+")}&background=0D1F2D&color=FFFFFF&size=50`} alt={c.name} className="w-10 h-10 rounded-full object-cover"/> 
     },
     { key: 'name', header: 'Nome', render: (c) => <span className="font-medium text-branco-nav">{c.name}</span> },
     { key: 'email', header: 'E-mail' },
@@ -118,18 +121,17 @@ const ManageClientsPage: React.FC = () => {
         <Table<User>
           columns={columns}
           data={clients}
-          isLoading={loading}
+          isLoading={loading && clients.length === 0}
           emptyStateMessage="Nenhum cliente encontrado. Os clientes aparecem aqui após o primeiro agendamento."
-          // onRowClick={openHistoryModal}
         />
       </Card>
 
       {isHistoryModalOpen && selectedClient && (
         <Modal isOpen={isHistoryModalOpen} onClose={closeHistoryModal} title={`Histórico de ${selectedClient.name}`} size="lg">
-          <div className="max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+          <div className="max-h-[60vh] overflow-y-auto pr-2">
             {getClientHistory(selectedClient.id).length > 0 ? (
               getClientHistory(selectedClient.id).map(booking => (
-                <div key={booking.id} className="p-3 mb-3 bg-gray-800 bg-opacity-50 rounded-md border border-gray-700">
+                <div key={booking.id} className="p-3 mb-3 bg-cinza-fundo-elemento bg-opacity-50 rounded-md border border-cinza-borda">
                   <p className="font-semibold text-branco-nav">{booking.serviceName} com {booking.barberName}</p>
                   <p className="text-sm text-gray-300">
                     {new Date(booking.startTime).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })} - R$ {booking.priceAtBooking.toFixed(2)}

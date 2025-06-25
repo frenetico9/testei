@@ -7,11 +7,12 @@ interface ModalProps {
   onClose: () => void;
   title?: string;
   children: React.ReactNode;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl'; // Added more sizes
   footer?: React.ReactNode;
+  bodyClassName?: string;
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, size = 'md', footer }) => {
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, size = 'md', footer, bodyClassName = '' }) => {
   useEffect(() => {
     const handleEsc = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -37,6 +38,8 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, size = 
     md: 'max-w-md',
     lg: 'max-w-lg',
     xl: 'max-w-xl',
+    '2xl': 'max-w-2xl',
+    '3xl': 'max-w-3xl',
   };
 
   return (
@@ -45,10 +48,10 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, size = 
       onClick={onClose} // Close on backdrop click
     >
       <div 
-        className={`bg-azul-marinho text-branco-nav rounded-lg shadow-xl w-full ${sizeClasses[size]} transform transition-all duration-300 border border-gray-700 ${isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
+        className={`bg-azul-marinho text-branco-nav rounded-lg shadow-xl w-full ${sizeClasses[size]} transform transition-all duration-300 border border-cinza-borda ${isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
         onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal
       >
-        <div className="flex justify-between items-center px-6 py-4 border-b border-gray-700">
+        <div className="flex justify-between items-center px-6 py-4 border-b border-cinza-borda">
           {title && <h3 className="text-xl font-roboto-slab font-semibold">{title}</h3>}
           <button
             onClick={onClose}
@@ -58,11 +61,11 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, size = 
             <X size={24} />
           </button>
         </div>
-        <div className="p-6 max-h-[70vh] overflow-y-auto">
+        <div className={`p-6 max-h-[70vh] overflow-y-auto ${bodyClassName}`}>
           {children}
         </div>
         {footer && (
-          <div className="px-6 py-4 border-t border-gray-700 flex justify-end space-x-3">
+          <div className="px-6 py-4 border-t border-cinza-borda flex justify-end space-x-3">
             {footer}
           </div>
         )}

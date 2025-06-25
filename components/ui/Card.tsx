@@ -11,9 +11,9 @@ interface CardProps {
 
 const Card: React.FC<CardProps> = ({ children, className = '', title, titleClassName = '', actions }) => {
   return (
-    <div className={`bg-azul-marinho bg-opacity-80 shadow-xl rounded-lg overflow-hidden border border-gray-700 backdrop-blur-sm ${className}`}>
+    <div className={`bg-azul-marinho bg-opacity-70 shadow-xl rounded-lg overflow-hidden border border-cinza-borda backdrop-blur-sm ${className}`}>
       {(title || actions) && (
-        <div className="px-4 py-3 sm:px-6 border-b border-gray-700 flex justify-between items-center">
+        <div className="px-4 py-3 sm:px-6 border-b border-cinza-borda flex justify-between items-center">
           {title && <h3 className={`text-lg leading-6 font-medium text-branco-nav font-roboto-slab ${titleClassName}`}>{title}</h3>}
           {actions && <div className="ml-4 flex-shrink-0">{actions}</div>}
         </div>
@@ -26,4 +26,3 @@ const Card: React.FC<CardProps> = ({ children, className = '', title, titleClass
 };
 
 export default Card;
-    

@@ -15,7 +15,6 @@ import { MOCK_SERVICES_DATA, DAYS_OF_WEEK_PT, DEFAULT_BARBER_AVAILABILITY, DAYS_
 const ManageBarbersPage: React.FC = () => {
   const { currentUser } = useAuth();
   const [barbers, setBarbers] = useState<Barber[]>([]);
-  // const [allServices, setAllServices] = useState<Service[]>(MOCK_SERVICES_DATA); // Placeholder if needed for linking services
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -30,6 +29,7 @@ const ManageBarbersPage: React.FC = () => {
         return;
     }
     setLoading(true);
+    setError(null);
     try {
       const { data, error: fetchError } = await supabase
         .from<Barber>('barbers')
@@ -50,9 +50,15 @@ const ManageBarbersPage: React.FC = () => {
 
   const openModal = (barber?: Barber) => {
     setIsEditMode(!!barber);
-    setCurrentBarber(barber ? { ...barber } : { 
-        name: '', email: '', specialties: [], availability: DEFAULT_BARBER_AVAILABILITY.map(a => ({...a})), // Ensure deep copy for availability
-        profilePictureUrl: '', bio: '', barbershopId: currentUser?.barbershopId, userId: ''
+    const initialAvailability = barber?.availability && barber.availability.length === DAYS_OF_WEEK.length 
+        ? barber.availability.map(a => ({...a})) 
+        : DEFAULT_BARBER_AVAILABILITY.map(a => ({...a}));
+
+    setCurrentBarber(barber ? { ...barber, availability: initialAvailability } : { 
+        name: '', email: '', specialties: [], availability: initialAvailability, 
+        profilePictureUrl: '', bio: '', barbershopId: currentUser?.barbershopId, 
+        // userId should be generated upon creation if not provided or linked to an existing User
+        userId: `temp_user_${Date.now()}` 
     });
     setIsModalOpen(true);
     setError(null);
@@ -94,25 +100,31 @@ const ManageBarbersPage: React.FC = () => {
     setError(null);
     setLoading(true);
 
-    const { id, ...barberDataDb } = { // Exclude id from data payload
+    // Prepare data for DB
+    const barberPayload: Partial<Barber> = {
         ...currentBarber,
         barbershopId: currentUser.barbershopId,
-        userId: currentBarber.userId || `user_barber_${Date.now()}_${Math.random().toString(36).substr(2,5)}`, 
+         // Ensure userId is properly set or generated if creating new user implicitly
+        userId: currentBarber.userId || `barber_user_${Date.now()}` // Mock user ID generation
     };
+    if (!isEditMode) delete barberPayload.id; // Remove id for insert operations
+
 
     try {
       if (isEditMode && currentBarber.id) {
+        const { id, ...updateData } = barberPayload; // id is part of currentBarber for edit
         const { error: updateError } = await supabase
             .from<Barber>('barbers')
-            .eq('id', currentBarber.id)
-            .update(barberDataDb as Partial<Barber>);
+            .update(updateData)
+            .eq('id', currentBarber.id);
         if (updateError) throw updateError;
       } else {
-        // TODO: In a real app, also create a User entry in Supabase auth if this barber needs to login.
-        // For simplicity, this mock only creates the 'barber' profile record.
+         // This is a simplified mock. In a real app, you might first create a User in 'users' table,
+         // get their ID, then create the Barber profile linked to that userId.
+         // For now, we assume direct insert into 'barbers' with mock userId.
         const { error: insertError } = await supabase
             .from<Barber>('barbers')
-            .insert(barberDataDb as Partial<Barber>);
+            .insert(barberPayload as Barber); // Cast because insert might expect all fields
         if (insertError) throw insertError;
       }
       await fetchBarbers();
@@ -128,11 +140,12 @@ const ManageBarbersPage: React.FC = () => {
   const handleDelete = async (barberId: string) => {
     if (!window.confirm("Tem certeza que deseja excluir este funcionário?")) return;
     setLoading(true);
+    setError(null);
     try {
       const { error: deleteError } = await supabase
         .from<Barber>('barbers')
-        .eq('id', barberId)
-        .delete();
+        .delete()
+        .eq('id', barberId);
       if (deleteError) throw deleteError;
       await fetchBarbers(); 
     } catch (err: any) {
@@ -143,7 +156,7 @@ const ManageBarbersPage: React.FC = () => {
   };
   
   const columns: ColumnDefinition<Barber>[] = [
-    { key: 'profilePictureUrl', header: 'Foto', render: (b) => <img src={b.profilePictureUrl || 'https://picsum.photos/seed/defaultbarber/50/50'} alt={b.name} className="w-10 h-10 rounded-full object-cover"/> },
+    { key: 'profilePictureUrl', header: 'Foto', render: (b) => <img src={b.profilePictureUrl || `https://ui-avatars.com/api/?name=${b.name.replace(/\s/g, "+")}&background=0D1F2D&color=FFFFFF&size=50`} alt={b.name} className="w-10 h-10 rounded-full object-cover"/> },
     { key: 'name', header: 'Nome', render: (b) => <span className="font-medium text-branco-nav">{b.name}</span> },
     { key: 'email', header: 'E-mail' },
     { key: 'specialties', header: 'Especialidades', render: (b) => (b.specialties || []).join(', ') },
@@ -172,23 +185,25 @@ const ManageBarbersPage: React.FC = () => {
         <Table<Barber>
           columns={columns}
           data={barbers}
-          isLoading={loading}
+          isLoading={loading && barbers.length === 0}
           emptyStateMessage="Nenhum funcionário cadastrado."
         />
       </Card>
 
       {isModalOpen && currentBarber && (
         <Modal isOpen={isModalOpen} onClose={closeModal} title={isEditMode ? "Editar Funcionário" : "Adicionar Novo Funcionário"} size="lg">
-          <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
+          <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
             <Input label="Nome Completo" name="name" value={currentBarber.name || ''} onChange={handleInputChange} required />
-            <Input label="E-mail" name="email" type="email" value={currentBarber.email || ''} onChange={handleInputChange} required />
+            <Input label="E-mail" name="email" type="email" value={currentBarber.email || ''} onChange={handleInputChange} required 
+              helperText="Este e-mail pode ser usado para o funcionário acessar o sistema no futuro (funcionalidade pendente)."
+            />
             <Input label="URL da Foto de Perfil (Opcional)" name="profilePictureUrl" value={currentBarber.profilePictureUrl || ''} onChange={handleInputChange} placeholder="https://exemplo.com/foto.jpg"/>
             <Input label="Especialidades (separadas por vírgula)" name="specialties" value={(currentBarber.specialties || []).join(', ') || ''} onChange={handleInputChange} placeholder="Corte Moderno, Barba Clássica"/>
             <Textarea label="Bio (Opcional)" name="bio" value={currentBarber.bio || ''} onChange={handleInputChange} rows={3} />
 
             <h4 className="text-lg font-roboto-slab font-semibold pt-2 text-branco-nav">Disponibilidade Semanal</h4>
             {currentBarber.availability?.map((slot, index) => (
-              <div key={index} className="grid grid-cols-1 sm:grid-cols-4 gap-x-3 gap-y-2 items-center p-2 border border-gray-700 rounded-md bg-gray-800 bg-opacity-30">
+              <div key={index} className="grid grid-cols-1 sm:grid-cols-4 gap-x-3 gap-y-2 items-center p-2 border border-cinza-borda rounded-md bg-cinza-fundo-elemento bg-opacity-30">
                 <span className="text-gray-300 col-span-4 sm:col-span-1">{DAYS_OF_WEEK_PT[slot.dayOfWeek]}</span>
                 <div className="col-span-2 sm:col-span-1">
                     <label htmlFor={`startTime-${index}`} className="text-xs text-gray-400">Início</label>
@@ -199,7 +214,7 @@ const ManageBarbersPage: React.FC = () => {
                     <Input type="time" name={`endTime-${index}`} id={`endTime-${index}`} value={slot.endTime} onChange={(e) => handleAvailabilityChange(index, 'endTime', e.target.value)} disabled={!slot.isWorking} containerClassName="mb-0" className="py-1.5"/>
                 </div>
                 <div className="flex items-center justify-start sm:justify-end col-span-4 sm:col-span-1 pt-2 sm:pt-0">
-                    <input type="checkbox" id={`isWorking-${index}`} checked={slot.isWorking} onChange={(e) => handleAvailabilityChange(index, 'isWorking', e.target.checked)} className="h-4 w-4 text-vermelho-bordo border-gray-500 rounded focus:ring-vermelho-bordo"/>
+                    <input type="checkbox" id={`isWorking-${index}`} checked={slot.isWorking} onChange={(e) => handleAvailabilityChange(index, 'isWorking', e.target.checked)} className="h-4 w-4 text-azul-primario border-gray-500 rounded focus:ring-azul-primario"/>
                     <label htmlFor={`isWorking-${index}`} className="ml-2 text-sm text-gray-300">Trabalha</label>
                 </div>
               </div>

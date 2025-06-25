@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { supabase } from '../../services/supabaseService';
+import { supabase, getBarbersForBarbershop } from '../../services/supabaseService';
 import { Service, Barber } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 import Table, { ColumnDefinition } from '../../components/ui/Table';
@@ -9,12 +9,12 @@ import Modal from '../../components/ui/Modal';
 import Input, { Textarea, Select } from '../../components/ui/Input';
 import Card from '../../components/ui/Card';
 import { PlusCircle, Edit3, Trash2, ToggleLeft, ToggleRight, AlertTriangle } from 'lucide-react';
-import { MOCK_BARBERS_DATA } from '../../constants'; // For assigning barbers
+// import { MOCK_BARBERS_DATA } from '../../constants'; // Keep for fallback if needed
 
 const ManageServicesPage: React.FC = () => {
   const { currentUser } = useAuth();
   const [services, setServices] = useState<Service[]>([]);
-  const [allBarbers, setAllBarbers] = useState<Barber[]>(MOCK_BARBERS_DATA); // Placeholder
+  const [allBarbers, setAllBarbers] = useState<Barber[]>([]); 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -22,41 +22,47 @@ const ManageServicesPage: React.FC = () => {
   const [currentService, setCurrentService] = useState<Partial<Service> | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
 
-  const fetchServices = useCallback(async () => {
+  const fetchServicesAndBarbers = useCallback(async () => {
     if (!currentUser || !currentUser.barbershopId) {
         setError("Usuário ou barbearia não identificados.");
         setLoading(false);
         return;
     }
     setLoading(true);
+    setError(null);
     try {
-      const { data, error: fetchError } = await supabase
-        .from<Service>('services')
-        .eq('barbershopId', currentUser.barbershopId)
-        .select('*');
-      if (fetchError) throw fetchError;
-      setServices(data || []);
+      const barbershopId = currentUser.barbershopId;
+      const [servicesData, barbersData] = await Promise.all([
+          supabase.from<Service>('services').eq('barbershopId', barbershopId).select('*'),
+          getBarbersForBarbershop(barbershopId) // Using the exported function
+      ]);
+
+      if (servicesData.error) throw servicesData.error;
+      // Barbers data fetching error can be handled or just use empty if it fails
+      if (barbersData) { // getBarbersForBarbershop returns Barber[] directly
+        setAllBarbers(barbersData);
+      } else {
+        console.warn("Could not fetch barbers for service management.");
+        setAllBarbers([]); // Or fallback to MOCK_BARBERS_DATA if absolutely necessary
+      }
+      
+      setServices(servicesData.data || []);
     } catch (err: any) {
-      setError(err.message || "Erro ao buscar serviços.");
+      setError(err.message || "Erro ao buscar dados.");
     } finally {
       setLoading(false);
     }
   }, [currentUser]);
 
   useEffect(() => {
-    fetchServices();
-    // Fetch barbers for the current barbershop to populate selector
-    if (currentUser?.barbershopId) {
-        // const fetchedBarbers = await getBarbersForBarbershop(currentUser.barbershopId);
-        // setAllBarbers(fetchedBarbers); // Replace MOCK_BARBERS_DATA
-    }
-  }, [fetchServices, currentUser?.barbershopId]);
+    fetchServicesAndBarbers();
+  }, [fetchServicesAndBarbers]);
 
   const openModal = (service?: Service) => {
     setIsEditMode(!!service);
-    setCurrentService(service ? { ...service } : { isActive: true, duration: 30, price: 0, assignedBarberIds: [], barbershopId: currentUser?.barbershopId });
+    setCurrentService(service ? { ...service } : { isActive: true, duration: 30, price: 0, assignedBarberIds: [], barbershopId: currentUser?.barbershopId, name: '', description: '', category: '' });
     setIsModalOpen(true);
-    setError(null); // Clear previous form errors
+    setError(null); 
   };
 
   const closeModal = () => {
@@ -87,26 +93,32 @@ const ManageServicesPage: React.FC = () => {
     setError(null); 
     setLoading(true);
 
-    const { id, ...serviceDataDb } = { // Exclude id from data to be inserted/updated directly in payload if it exists
+    const servicePayload: Partial<Service> = { 
         ...currentService,
         barbershopId: currentUser.barbershopId, 
+        // Ensure numbers are numbers
+        price: Number(currentService.price) || 0,
+        duration: Number(currentService.duration) || 30,
     };
+    // Remove ID if it's for insert, keep for update
+    if (!isEditMode) delete servicePayload.id;
 
 
     try {
       if (isEditMode && currentService.id) {
+        const { id, ...updateData } = servicePayload; // Exclude ID from update payload if it's there
         const { error: updateError } = await supabase
             .from<Service>('services')
-            .eq('id', currentService.id)
-            .update(serviceDataDb as Partial<Service>); // Pass data without id
+            .update(updateData) 
+            .eq('id', currentService.id);
         if (updateError) throw updateError;
       } else {
         const { error: insertError } = await supabase
             .from<Service>('services')
-            .insert(serviceDataDb as Partial<Service>);
+            .insert(servicePayload as Service); // Cast because insert needs full object for TS
         if (insertError) throw insertError;
       }
-      await fetchServices();
+      await fetchServicesAndBarbers();
       closeModal();
     } catch (err: any) {
       console.error("Erro ao salvar serviço:", err);
@@ -119,13 +131,14 @@ const ManageServicesPage: React.FC = () => {
   const handleDelete = async (serviceId: string) => {
     if (!window.confirm("Tem certeza que deseja excluir este serviço? Esta ação não pode ser desfeita.")) return;
     setLoading(true);
+    setError(null);
     try {
       const { error: deleteError } = await supabase
         .from<Service>('services')
-        .eq('id', serviceId)
-        .delete();
+        .delete()
+        .eq('id', serviceId);
       if (deleteError) throw deleteError;
-      await fetchServices(); 
+      await fetchServicesAndBarbers(); 
     } catch (err: any) {
       setError(err.message || "Erro ao excluir serviço.");
     } finally {
@@ -135,13 +148,14 @@ const ManageServicesPage: React.FC = () => {
 
   const toggleServiceStatus = async (service: Service) => {
     setLoading(true);
+    setError(null);
     try {
         const { error: updateError } = await supabase
             .from<Service>('services')
-            .eq('id', service.id)
-            .update({ isActive: !service.isActive });
+            .update({ isActive: !service.isActive })
+            .eq('id', service.id);
         if (updateError) throw updateError;
-        await fetchServices();
+        await fetchServicesAndBarbers();
     } catch (err:any) {
         setError(err.message || "Erro ao alterar status do serviço.");
     } finally {
@@ -166,8 +180,8 @@ const ManageServicesPage: React.FC = () => {
       render: (s) => (
         <button onClick={() => toggleServiceStatus(s)} title={s.isActive ? "Desativar" : "Ativar"} className="focus:outline-none">
           {s.isActive 
-            ? <ToggleRight size={24} className="text-green-500 cursor-pointer" /> 
-            : <ToggleLeft size={24} className="text-gray-500 cursor-pointer" />}
+            ? <ToggleRight size={24} className="text-green-500 cursor-pointer hover:text-green-400" /> 
+            : <ToggleLeft size={24} className="text-gray-500 cursor-pointer hover:text-gray-400" />}
         </button>
       ) 
     },
@@ -198,7 +212,7 @@ const ManageServicesPage: React.FC = () => {
         <Table<Service>
           columns={columns}
           data={services}
-          isLoading={loading}
+          isLoading={loading && services.length === 0}
           emptyStateMessage="Nenhum serviço cadastrado."
         />
       </Card>
@@ -207,6 +221,7 @@ const ManageServicesPage: React.FC = () => {
         <Modal isOpen={isModalOpen} onClose={closeModal} title={isEditMode ? "Editar Serviço" : "Adicionar Novo Serviço"}>
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input label="Nome do Serviço" name="name" value={currentService.name || ''} onChange={handleInputChange} required />
+            <Input label="Categoria (Opcional)" name="category" value={currentService.category || ''} onChange={handleInputChange} placeholder="Ex: Cabelo, Barba, Combo"/>
             <Textarea label="Descrição (Opcional)" name="description" value={currentService.description || ''} onChange={handleInputChange} rows={3} />
             <div className="grid grid-cols-2 gap-4">
                 <Input label="Duração (minutos)" name="duration" type="number" value={String(currentService.duration || '')} onChange={handleInputChange} required min="5"/>
@@ -221,7 +236,7 @@ const ManageServicesPage: React.FC = () => {
                     multiple 
                     value={currentService.assignedBarberIds || []} 
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 bg-gray-700 bg-opacity-50 border border-gray-600 rounded-md text-branco-nav focus:outline-none focus:ring-2 focus:ring-vermelho-bordo h-32"
+                    className="w-full px-4 py-2 bg-gray-700 bg-opacity-50 border border-cinza-borda rounded-md text-branco-nav focus:outline-none focus:ring-2 focus:ring-azul-primario h-32"
                 >
                     {barberOptions.map(option => (
                         <option key={option.value} value={option.value}>{option.label}</option>
@@ -231,7 +246,7 @@ const ManageServicesPage: React.FC = () => {
             </div>
 
             <div className="flex items-center">
-              <input type="checkbox" id="isActive" name="isActive" checked={currentService.isActive || false} onChange={handleInputChange} className="h-4 w-4 text-vermelho-bordo border-gray-500 rounded focus:ring-vermelho-bordo"/>
+              <input type="checkbox" id="isActive" name="isActive" checked={currentService.isActive === undefined ? true : currentService.isActive} onChange={handleInputChange} className="h-4 w-4 text-azul-primario border-gray-500 rounded focus:ring-azul-primario"/>
               <label htmlFor="isActive" className="ml-2 block text-sm text-gray-300">Serviço Ativo</label>
             </div>
             {error && <p className="text-red-400 text-sm">{error}</p>}

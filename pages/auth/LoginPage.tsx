@@ -39,7 +39,7 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-azul-marinho p-4 bg-leather-texture">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-azul-marinho p-4">
       <div className="mb-8">
         <Logo size="large" />
       </div>
@@ -72,14 +72,14 @@ const LoginPage: React.FC = () => {
           </Button>
         </form>
         <div className="mt-6 text-center">
-          <Link to={ROUTES.FORGOT_PASSWORD} className="text-sm text-gray-400 hover:text-vermelho-bordo transition-colors">
+          <Link to={ROUTES.FORGOT_PASSWORD} className="text-sm text-gray-400 hover:text-azul-primario transition-colors">
             Esqueceu sua senha?
           </Link>
         </div>
         <div className="mt-4 text-center">
           <p className="text-sm text-gray-300">
             Não tem uma conta de barbearia?{' '}
-            <Link to={ROUTES.REGISTER} className="font-semibold text-vermelho-bordo hover:text-vermelho-bordo-light transition-colors">
+            <Link to={ROUTES.REGISTER} className="font-semibold text-azul-primario hover:text-azul-primario-hover transition-colors">
               Cadastre-se aqui
             </Link>
           </p>
@@ -87,7 +87,7 @@ const LoginPage: React.FC = () => {
          <div className="mt-4 text-center">
           <p className="text-sm text-gray-300">
             É um cliente?{' '}
-            <Link to={ROUTES.HOME} className="font-semibold text-vermelho-bordo hover:text-vermelho-bordo-light transition-colors">
+            <Link to={ROUTES.HOME} className="font-semibold text-azul-primario hover:text-azul-primario-hover transition-colors">
               Voltar para o início
             </Link>
           </p>
@@ -98,4 +98,3 @@ const LoginPage: React.FC = () => {
 };
 
 export default LoginPage;
-    
